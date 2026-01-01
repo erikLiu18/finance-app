@@ -18,35 +18,35 @@ export default async function CreditCardsPage() {
     const creditCards = await getCreditCards();
 
     return (
-        <div className="container mx-auto py-10">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">Credit Cards</h1>
+        <div className="container mx-auto px-4 py-6 md:py-10">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <h1 className="text-2xl md:text-3xl font-bold">Credit Cards</h1>
                 <AddCardDialog />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {creditCards.length === 0 ? (
                     <div className="col-span-full text-center text-muted-foreground py-10">
                         No credit cards added yet. Add one to get started!
                     </div>
                 ) : (
                     creditCards.map((card: CreditCard) => (
-                        <Card key={card.id}>
-                            <CardHeader>
-                                <CardTitle>{card.name}</CardTitle>
+                        <Card key={card.id} className="flex flex-col">
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-lg">{card.name}</CardTitle>
                                 <CardDescription>Due on the {card.dueDay}th</CardDescription>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="flex-1">
                                 <div className="flex flex-col gap-2 text-sm">
                                     <div className="flex justify-between">
                                         <span>Email Alerts:</span>
-                                        <span className={card.notifyEmail ? "text-green-600" : "text-muted-foreground"}>
+                                        <span className={card.notifyEmail ? "text-green-600 dark:text-green-500" : "text-muted-foreground"}>
                                             {card.notifyEmail ? "On" : "Off"}
                                         </span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span>Text Alerts:</span>
-                                        <span className={card.notifySms ? "text-green-600" : "text-muted-foreground"}>
+                                        <span className={card.notifySms ? "text-green-600 dark:text-green-500" : "text-muted-foreground"}>
                                             {card.notifySms ? "On" : "Off"}
                                         </span>
                                     </div>
@@ -56,7 +56,7 @@ export default async function CreditCardsPage() {
                                     </div>
                                 </div>
                             </CardContent>
-                            <CardFooter className="flex justify-end">
+                            <CardFooter className="flex justify-end pt-3">
                                 <form
                                     action={async () => {
                                         "use server";
