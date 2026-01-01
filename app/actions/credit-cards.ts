@@ -1,13 +1,10 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
-import { PrismaClient } from "@prisma/client";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
-
-// const prisma = new PrismaClient(); // Removed
 
 const creditCardSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -29,8 +26,9 @@ export async function getCreditCards() {
 }
 
 export async function addCreditCard(formData: z.infer<typeof creditCardSchema>) {
-    const { userId } = await auth();
-    if (!userId) throw new Error("Unauthorized");
+    const user = await currentUser();
+    if (!user) throw new Error("Unauthorized");
+    const userId = user.id;
 
     const validatedFields = creditCardSchema.safeParse(formData);
     if (!validatedFields.success) {
@@ -39,14 +37,15 @@ export async function addCreditCard(formData: z.infer<typeof creditCardSchema>) 
 
     const { name, dueDay, notifyEmail, notifySms, daysBefore, hoursBefore } = validatedFields.data;
 
-    // Ensure User exists in our DB (sync with Clerk if needed)
-    // Logic: In a real app we'd use webhooks, but for now we can upsert the user
+    const email = user.emailAddresses[0]?.emailAddress ?? "no-email@example.com";
+
+    // Ensure User exists in our DB (sync with Clerk)
     await prisma.user.upsert({
         where: { id: userId },
-        update: {},
+        update: { email }, // Update email if it changed
         create: {
             id: userId,
-            email: "placeholder@example.com", // We might not have email here without extra Clerk calls
+            email,
         },
     });
 
