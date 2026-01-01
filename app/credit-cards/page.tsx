@@ -53,7 +53,9 @@ export default async function CreditCardsPage() {
                                     </div>
                                     <div className="flex justify-between">
                                         <span>Notify Before:</span>
-                                        <span>{card.notifyDaysBefore} Days</span>
+                                        <span>
+                                            {card.notifyDaysBefore}d {card.notifyHoursBefore}h
+                                        </span>
                                     </div>
                                 </div>
                             </CardContent>

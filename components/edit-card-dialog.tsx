@@ -43,7 +43,8 @@ const formSchema = z.object({
     }),
     notifyEmail: z.boolean().default(false),
     notifySms: z.boolean().default(false),
-    daysBefore: z.coerce.number().min(1).max(10).default(3),
+    daysBefore: z.coerce.number().min(0).max(10).default(3),
+    hoursBefore: z.coerce.number().min(0).max(23).default(0),
 });
 
 interface EditCardDialogProps {
@@ -54,6 +55,7 @@ interface EditCardDialogProps {
         notifyEmail: boolean;
         notifySms: boolean;
         notifyDaysBefore: number;
+        notifyHoursBefore: number;
     };
 }
 
@@ -67,6 +69,7 @@ export function EditCardDialog({ card }: EditCardDialogProps) {
             notifyEmail: card.notifyEmail,
             notifySms: card.notifySms,
             daysBefore: card.notifyDaysBefore,
+            hoursBefore: card.notifyHoursBefore,
         },
     });
 
@@ -114,7 +117,7 @@ export function EditCardDialog({ card }: EditCardDialogProps) {
                             )}
                         />
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-3 gap-4">
                             <FormField
                                 control={form.control}
                                 name="dueDay"
@@ -144,9 +147,22 @@ export function EditCardDialog({ card }: EditCardDialogProps) {
                                 name="daysBefore"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Notify Days Before</FormLabel>
+                                        <FormLabel>Days Before</FormLabel>
                                         <FormControl>
-                                            <Input type="number" {...field} />
+                                            <Input type="number" min="0" max="10" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="hoursBefore"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Hours Before</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" min="0" max="23" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

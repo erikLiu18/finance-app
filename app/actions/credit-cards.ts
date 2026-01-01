@@ -14,7 +14,8 @@ const creditCardSchema = z.object({
     dueDay: z.coerce.number().min(1).max(31),
     notifyEmail: z.boolean().default(false),
     notifySms: z.boolean().default(false),
-    daysBefore: z.coerce.number().min(1).max(10).default(3),
+    daysBefore: z.coerce.number().min(0).max(10).default(3),
+    hoursBefore: z.coerce.number().min(0).max(23).default(0),
 });
 
 export async function getCreditCards() {
@@ -36,7 +37,7 @@ export async function addCreditCard(formData: z.infer<typeof creditCardSchema>) 
         throw new Error("Invalid fields");
     }
 
-    const { name, dueDay, notifyEmail, notifySms, daysBefore } = validatedFields.data;
+    const { name, dueDay, notifyEmail, notifySms, daysBefore, hoursBefore } = validatedFields.data;
 
     // Ensure User exists in our DB (sync with Clerk if needed)
     // Logic: In a real app we'd use webhooks, but for now we can upsert the user
@@ -57,6 +58,7 @@ export async function addCreditCard(formData: z.infer<typeof creditCardSchema>) 
             notifyEmail,
             notifySms,
             notifyDaysBefore: daysBefore,
+            notifyHoursBefore: hoursBefore,
         },
     });
 
@@ -86,7 +88,7 @@ export async function updateCreditCard(id: string, formData: z.infer<typeof cred
         throw new Error("Invalid fields");
     }
 
-    const { name, dueDay, notifyEmail, notifySms, daysBefore } = validatedFields.data;
+    const { name, dueDay, notifyEmail, notifySms, daysBefore, hoursBefore } = validatedFields.data;
 
     await prisma.creditCard.update({
         where: {
@@ -99,6 +101,7 @@ export async function updateCreditCard(id: string, formData: z.infer<typeof cred
             notifyEmail,
             notifySms,
             notifyDaysBefore: daysBefore,
+            notifyHoursBefore: hoursBefore,
         },
     });
 
