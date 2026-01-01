@@ -76,3 +76,31 @@ export async function deleteCreditCard(id: string) {
 
     revalidatePath("/credit-cards");
 }
+
+export async function updateCreditCard(id: string, formData: z.infer<typeof creditCardSchema>) {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    const validatedFields = creditCardSchema.safeParse(formData);
+    if (!validatedFields.success) {
+        throw new Error("Invalid fields");
+    }
+
+    const { name, dueDay, notifyEmail, notifySms, daysBefore } = validatedFields.data;
+
+    await prisma.creditCard.update({
+        where: {
+            id,
+            userId, // Security: Ensure user owns the card
+        },
+        data: {
+            name,
+            dueDay,
+            notifyEmail,
+            notifySms,
+            notifyDaysBefore: daysBefore,
+        },
+    });
+
+    revalidatePath("/credit-cards");
+}

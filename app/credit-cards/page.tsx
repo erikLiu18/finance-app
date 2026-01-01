@@ -2,6 +2,7 @@ import { getCreditCards, deleteCreditCard } from "@/app/actions/credit-cards";
 
 export const dynamic = "force-dynamic";
 import { AddCardDialog } from "@/components/add-card-dialog";
+import { EditCardDialog } from "@/components/edit-card-dialog";
 import {
     Card,
     CardContent,
@@ -56,7 +57,8 @@ export default async function CreditCardsPage() {
                                     </div>
                                 </div>
                             </CardContent>
-                            <CardFooter className="flex justify-end pt-3">
+                            <CardFooter className="flex justify-end gap-2 pt-3">
+                                <EditCardDialog card={card} />
                                 <form
                                     action={async () => {
                                         "use server";
