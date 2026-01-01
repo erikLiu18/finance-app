@@ -1,0 +1,39 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id // Clerk User ID
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  creditCards CreditCard[]
+
+  @@map("users")
+}
+
+model CreditCard {
+  id             String   @id @default(uuid())
+  userId         String
+  name           String   // e.g. "Amex Gold"
+  dueDay         Int      // Day of month (1-31)
+  notifyEmail    Boolean  @default(false)
+  notifySms      Boolean  @default(false)
+  phoneNumber    String?
+  notifyDaysBefore Int    @default(3)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("credit_cards")
+}

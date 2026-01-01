@@ -1,0 +1,77 @@
+import { getCreditCards, deleteCreditCard } from "@/app/actions/credit-cards";
+
+export const dynamic = "force-dynamic";
+import { AddCardDialog } from "@/components/add-card-dialog";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { CreditCard } from "@prisma/client";
+
+export default async function CreditCardsPage() {
+    const creditCards = await getCreditCards();
+
+    return (
+        <div className="container mx-auto py-10">
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-bold">Credit Cards</h1>
+                <AddCardDialog />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {creditCards.length === 0 ? (
+                    <div className="col-span-full text-center text-muted-foreground py-10">
+                        No credit cards added yet. Add one to get started!
+                    </div>
+                ) : (
+                    creditCards.map((card: CreditCard) => (
+                        <Card key={card.id}>
+                            <CardHeader>
+                                <CardTitle>{card.name}</CardTitle>
+                                <CardDescription>Due on the {card.dueDay}th</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="flex flex-col gap-2 text-sm">
+                                    <div className="flex justify-between">
+                                        <span>Email Alerts:</span>
+                                        <span className={card.notifyEmail ? "text-green-600" : "text-muted-foreground"}>
+                                            {card.notifyEmail ? "On" : "Off"}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Text Alerts:</span>
+                                        <span className={card.notifySms ? "text-green-600" : "text-muted-foreground"}>
+                                            {card.notifySms ? "On" : "Off"}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Notify Before:</span>
+                                        <span>{card.notifyDaysBefore} Days</span>
+                                    </div>
+                                </div>
+                            </CardContent>
+                            <CardFooter className="flex justify-end">
+                                <form
+                                    action={async () => {
+                                        "use server";
+                                        await deleteCreditCard(card.id);
+                                    }}
+                                >
+                                    <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10">
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </form>
+                            </CardFooter>
+                        </Card>
+                    ))
+                )}
+            </div>
+        </div>
+    );
+}
