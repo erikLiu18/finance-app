@@ -36,6 +36,7 @@ model CreditCard {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   lastPaidDueDate DateTime? // The due date of the last bill that was paid
+  lastNotifiedAt DateTime?  // When the last notification was sent
 
   @@index([userId])
   @@map("credit_cards")

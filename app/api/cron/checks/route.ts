@@ -28,13 +28,20 @@ export async function GET(request: Request) {
         const notificationsSent = [];
 
         for (const card of cards) {
+            // Check time in ET
+            const now = new Date();
+            const timeInET = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
+            const currentHourET = timeInET.getHours();
+
+            // Only notify after 5 PM ET (17:00)
+            if (currentHourET < 17) {
+                continue;
+            }
+
             // Calculate due date for this month
             const currentYear = today.getFullYear();
             const currentMonth = today.getMonth(); // 0-indexed
 
-            // Handle due days that don't exist in current month (e.g. 31st in Feb)
-            // JS Date auto-corrects (Feb 31 -> Mar 3), which might be okay or off by a day.
-            // Better to strictly set the day.
             let dueDate = new Date(currentYear, currentMonth, card.dueDay);
 
             // If due date passed, look at next month
@@ -48,12 +55,19 @@ export async function GET(request: Request) {
                 continue;
             }
 
+            // Skip if already notified today.
+            // Check if lastNotifiedAt is the same day as today (in ET or server time? server time is fine if we just want "today")
+            // Actually, let's use the current date (server time) for simplicity, as the cron runs daily.
+            if (card.lastNotifiedAt &&
+                card.lastNotifiedAt.toDateString() === today.toDateString()) {
+                continue;
+            }
+
             // Calculate "Notify Date"
             const notifyDate = new Date(dueDate);
             notifyDate.setDate(dueDate.getDate() - card.notifyDaysBefore);
 
             // Check if TODAY is the notify date
-            // Compare YYYY-MM-DD
             if (
                 today.getDate() === notifyDate.getDate() &&
                 today.getMonth() === notifyDate.getMonth() &&
@@ -71,6 +85,13 @@ export async function GET(request: Request) {
                 if (card.notifySms) {
                     await sendSms("+1234567890", `Bill Due: ${card.name} on ${dueDate.toLocaleDateString()}`);
                 }
+
+                // Update lastNotifiedAt
+                await prisma.creditCard.update({
+                    where: { id: card.id },
+                    data: { lastNotifiedAt: new Date() }
+                });
+
                 notificationsSent.push(card.name);
             }
         }
