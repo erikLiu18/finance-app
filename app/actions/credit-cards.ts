@@ -11,8 +11,6 @@ const creditCardSchema = z.object({
     dueDay: z.coerce.number().min(1).max(31),
     notifyEmail: z.boolean().default(false),
     notifySms: z.boolean().default(false),
-    daysBefore: z.coerce.number().min(0).max(10).default(3),
-    hoursBefore: z.coerce.number().min(0).max(23).default(0),
 });
 
 export async function getCreditCards() {
@@ -35,7 +33,7 @@ export async function addCreditCard(formData: z.infer<typeof creditCardSchema>) 
         throw new Error("Invalid fields");
     }
 
-    const { name, dueDay, notifyEmail, notifySms, daysBefore, hoursBefore } = validatedFields.data;
+    const { name, dueDay, notifyEmail, notifySms } = validatedFields.data;
 
     const email = user.emailAddresses[0]?.emailAddress ?? "no-email@example.com";
 
@@ -56,8 +54,6 @@ export async function addCreditCard(formData: z.infer<typeof creditCardSchema>) 
             dueDay,
             notifyEmail,
             notifySms,
-            notifyDaysBefore: daysBefore,
-            notifyHoursBefore: hoursBefore,
         },
     });
 
@@ -87,7 +83,7 @@ export async function updateCreditCard(id: string, formData: z.infer<typeof cred
         throw new Error("Invalid fields");
     }
 
-    const { name, dueDay, notifyEmail, notifySms, daysBefore, hoursBefore } = validatedFields.data;
+    const { name, dueDay, notifyEmail, notifySms } = validatedFields.data;
 
     await prisma.creditCard.update({
         where: {
@@ -99,8 +95,6 @@ export async function updateCreditCard(id: string, formData: z.infer<typeof cred
             dueDay,
             notifyEmail,
             notifySms,
-            notifyDaysBefore: daysBefore,
-            notifyHoursBefore: hoursBefore,
         },
     });
 
@@ -149,6 +143,59 @@ export async function undoMarkCardAsPaid(cardId: string) {
     await prisma.creditCard.update({
         where: { id: cardId },
         data: { lastPaidDueDate: null },
+    });
+
+    revalidatePath("/credit-cards");
+}
+
+export async function getNotificationAlerts() {
+    const { userId } = await auth();
+    if (!userId) return [];
+
+    return await prisma.notificationAlert.findMany({
+        where: { userId },
+        orderBy: { hoursBefore: "desc" },
+    });
+}
+
+export async function createNotificationAlert(hoursBefore: number) {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    // Enforce max 5 alerts
+    const count = await prisma.notificationAlert.count({
+        where: { userId },
+    });
+
+    if (count >= 5) {
+        throw new Error("Maximum of 5 alerts allowed.");
+    }
+
+    // Check for duplicates
+    const existing = await prisma.notificationAlert.findFirst({
+        where: { userId, hoursBefore },
+    });
+
+    if (existing) {
+        throw new Error("Alert already exists for this time.");
+    }
+
+    await prisma.notificationAlert.create({
+        data: {
+            userId,
+            hoursBefore,
+        },
+    });
+
+    revalidatePath("/credit-cards");
+}
+
+export async function deleteNotificationAlert(id: string) {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    await prisma.notificationAlert.delete({
+        where: { id, userId },
     });
 
     revalidatePath("/credit-cards");

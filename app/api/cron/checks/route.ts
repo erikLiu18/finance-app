@@ -1,7 +1,8 @@
-
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendEmail, sendSms } from "@/lib/notifications/service";
+import { sendEmail } from "@/lib/notifications/service";
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
     const authHeader = request.headers.get("authorization");
@@ -10,89 +11,143 @@ export async function GET(request: Request) {
     }
 
     try {
-        const today = new Date();
-        // Logic to find cards due in 'notifyDaysBefore' days
-        // This is complex because 'dueDay' is just an integer (1-31)
-        // For MVP, we fetch all active cards and filter in JS.
-
-        // 1. Fetch all cards with notifications enabled
-        const cards = await prisma.creditCard.findMany({
-            where: {
-                OR: [{ notifyEmail: true }, { notifySms: true }],
-            },
+        // 1. Fetch users with alerts and cards
+        const users = await prisma.user.findMany({
             include: {
-                user: true, // Assuming relation exists, might need adjustment if not
+                notificationAlerts: true,
+                creditCards: {
+                    where: {
+                        OR: [{ notifyEmail: true }, { notifySms: true }],
+                    },
+                    include: {
+                        notificationLogs: true, // Fetch logs to check against
+                    }
+                }
             }
         });
 
-        const notificationsSent = [];
+        const notificationsSent: string[] = [];
 
-        for (const card of cards) {
-            // Check time in ET
-            const now = new Date();
-            const timeInET = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
-            const currentHourET = timeInET.getHours();
+        // 2. Determine Current Time in ET
+        // We do this by creating a date string in ET and parsing it back
+        const now = new Date();
+        const etString = now.toLocaleString("en-US", { timeZone: "America/New_York", hour12: false });
+        // etString is roughly "M/D/YYYY, HH:mm:ss"
+        const nowET = new Date(etString);
 
-            // Only notify after 5 PM ET (17:00)
-            if (currentHourET < 17) {
-                continue;
-            }
+        // Helper to get ET date object for a specific year/month/day at 17:00:00
+        const getDeadlineET = (dYear: number, dMonth: number, dDay: number) => {
+            const date = new Date(dYear, dMonth, dDay, 17, 0, 0, 0);
+            // Note: This 'date' is constructed using Server Local Time interpretation of the numbers.
+            // If server is UTC, this is 17:00 UTC.
+            // But we want to compare with 'nowET' which is also constructed similarly.
+            // As long as both `nowET` and `deadline` are constructed from components treated as "Local Time" (which we align to ET components), the difference is correct.
+            return date;
+        };
 
-            // Calculate due date for this month
-            const currentYear = today.getFullYear();
-            const currentMonth = today.getMonth(); // 0-indexed
+        for (const user of users) {
+            if (user.notificationAlerts.length === 0 || user.creditCards.length === 0) continue;
 
-            let dueDate = new Date(currentYear, currentMonth, card.dueDay);
+            for (const card of user.creditCards) {
+                const currentDay = nowET.getDate();
+                const currentMonth = nowET.getMonth(); // 0-11
+                const currentYear = nowET.getFullYear();
 
-            // If due date passed, look at next month
-            if (dueDate < today) {
-                dueDate = new Date(currentYear, currentMonth + 1, card.dueDay);
-            }
+                // Determine relevant due date
+                // If we are past the due day (e.g. today 6th, due 5th), we assume the NEXT bill.
+                // However, if we are currently checking for a missed alert on the 5th (today 5th 18:00), we still want the 5th.
 
-            // Skip if already paid for this cycle
-            if (card.lastPaidDueDate &&
-                card.lastPaidDueDate.toDateString() === dueDate.toDateString()) {
-                continue;
-            }
+                let targetMonth = currentMonth;
+                let targetYear = currentYear;
 
-            // Skip if already notified today.
-            // Check if lastNotifiedAt is the same day as today (in ET or server time? server time is fine if we just want "today")
-            // Actually, let's use the current date (server time) for simplicity, as the cron runs daily.
-            if (card.lastNotifiedAt &&
-                card.lastNotifiedAt.toDateString() === today.toDateString()) {
-                continue;
-            }
+                // Safe check: if today is past the card due day, and we are quite late (e.g. next day), move to next month.
+                // But strictly, if we are on the due day (after 17:00), we might still need to send the 0-hour alert or overdue.
+                // Let's stick to: If today > dueDay, assume next month.
+                // This has the edge case: What if cron runs on DueDay at 18:00? 
+                // It sees DueDay < Today? No, Equal. So it stays current month. 
 
-            // Calculate "Notify Date"
-            const notifyDate = new Date(dueDate);
-            notifyDate.setDate(dueDate.getDate() - card.notifyDaysBefore);
-
-            // Check if TODAY is the notify date
-            if (
-                today.getDate() === notifyDate.getDate() &&
-                today.getMonth() === notifyDate.getMonth() &&
-                today.getFullYear() === notifyDate.getFullYear()
-            ) {
-                // SEND NOTIFICATION
-                if (card.notifyEmail) {
-                    const email = card.user?.email;
-                    if (email) {
-                        await sendEmail(email, `Bill Due: ${card.name}`, `Your ${card.name} bill is due on ${dueDate.toLocaleDateString()}`);
-                    } else {
-                        console.warn(`[CRON] Card ${card.name} has notifyEmail=true but user has no email.`);
+                if (currentDay > card.dueDay) {
+                    targetMonth++;
+                    if (targetMonth > 11) {
+                        targetMonth = 0;
+                        targetYear++;
                     }
                 }
-                if (card.notifySms) {
-                    await sendSms("+1234567890", `Bill Due: ${card.name} on ${dueDate.toLocaleDateString()}`);
+
+                const deadlineET = getDeadlineET(targetYear, targetMonth, card.dueDay);
+
+                // If deadline is in the past (e.g. earlier today), that's fine, we check if we missed alert.
+
+                // Skip if already paid
+                // We need to construct the JS Date for the due date to compare with lastPaidDueDate (which is DB stored date).
+                // DB stores generic date. Let's compare generic YYYY-MM-DD string.
+                const dueDateString = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-${String(card.dueDay).padStart(2, '0')}`;
+
+                if (card.lastPaidDueDate) {
+                    // Convert stored date to string
+                    const paidDate = new Date(card.lastPaidDueDate);
+                    const paidYear = paidDate.getFullYear();
+                    const paidMonth = paidDate.getMonth() + 1;
+                    const paidDay = paidDate.getDate();
+                    const paidDateString = `${paidYear}-${String(paidMonth).padStart(2, '0')}-${String(paidDay).padStart(2, '0')}`;
+
+                    // We match broadly on the cycle.
+                    // Actually, exact match on constructed Due Date is safest.
+                    // Our `markCardAsPaid` logic sets `lastPaidDueDate` to the exact Due Date.
+                    // But let's handle potential timezone drift in DB storage by comparing components or close proximity?
+                    // Safer: compare generic strings YYYY-MM-DD.
+
+                    // Wait, `markCardAsPaid` uses server local time. Cron uses ET-shifted time.
+                    // The `dueDay` is the anchor. 
+                    // If `lastPaidDueDate` is "2023-01-05...", and we are looking at due date "2023-01-05", it's match.
+
+                    if (paidDateString === dueDateString) {
+                        continue;
+                    }
                 }
 
-                // Update lastNotifiedAt
-                await prisma.creditCard.update({
-                    where: { id: card.id },
-                    data: { lastNotifiedAt: new Date() }
-                });
+                // Check each alert
+                for (const alert of user.notificationAlerts) {
+                    // Check NotificationLog
+                    const alreadySent = card.notificationLogs.some(log =>
+                        log.alertHoursBefore === alert.hoursBefore &&
+                        new Date(log.dueDate).toISOString().startsWith(dueDateString) // Compare YMD
+                    );
 
-                notificationsSent.push(card.name);
+                    if (alreadySent) continue;
+
+                    // Check if time to trigger
+                    // Trigger is deadline - hoursBefore
+                    // e.g. Deadline 17:00. Alert 1h. Trigger 16:00.
+                    // If Now 16:01. 16:01 >= 16:00. Send.
+
+                    const triggerTime = new Date(deadlineET);
+                    triggerTime.setHours(triggerTime.getHours() - alert.hoursBefore);
+
+                    if (nowET >= triggerTime) {
+                        // SEND
+                        const msg = `Bill Due: ${card.name} is due on ${targetYear}-${targetMonth + 1}-${card.dueDay} by 5 PM ET.`;
+
+                        if (card.notifyEmail && user.email) {
+                            await sendEmail(user.email, `Bill Due Reminder: ${card.name}`, msg);
+                        }
+                        if (card.notifySms) {
+                            // Assuming we have a phone number, logic placeholder
+                            // await sendSms(...)
+                        }
+
+                        // LOG
+                        await prisma.notificationLog.create({
+                            data: {
+                                creditCardId: card.id,
+                                alertHoursBefore: alert.hoursBefore,
+                                dueDate: new Date(targetYear, targetMonth, card.dueDay) // Storing purely as date marker
+                            }
+                        });
+
+                        notificationsSent.push(`${card.name} (${alert.hoursBefore}h)`);
+                    }
+                }
             }
         }
 

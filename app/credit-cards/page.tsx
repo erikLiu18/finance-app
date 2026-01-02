@@ -1,8 +1,9 @@
-import { getCreditCards, deleteCreditCard, markCardAsPaid, undoMarkCardAsPaid } from "@/app/actions/credit-cards";
+import { getCreditCards, getNotificationAlerts, deleteCreditCard, markCardAsPaid, undoMarkCardAsPaid } from "@/app/actions/credit-cards";
 
 export const dynamic = "force-dynamic";
 import { AddCardDialog } from "@/components/add-card-dialog";
 import { EditCardDialog } from "@/components/edit-card-dialog";
+import { NotificationSettings } from "@/components/notification-settings";
 import {
     Card,
     CardContent,
@@ -17,12 +18,21 @@ import { CreditCard } from "@prisma/client";
 
 export default async function CreditCardsPage() {
     const creditCards = await getCreditCards();
+    const alerts = await getNotificationAlerts();
 
     return (
         <div className="container mx-auto px-4 py-6 md:py-10">
             <div className="flex flex-row justify-between items-center gap-4 mb-6">
-                <h1 className="text-2xl md:text-3xl font-bold">Credit Cards</h1>
-                <AddCardDialog />
+                <div>
+                    <h1 className="text-2xl md:text-3xl font-bold">Credit Cards</h1>
+                    <p className="text-muted-foreground text-sm mt-1">
+                        Manage your credit cards and payment alerts.
+                    </p>
+                </div>
+                <div className="flex gap-2">
+                    <NotificationSettings initialAlerts={alerts} />
+                    <AddCardDialog />
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
@@ -49,12 +59,6 @@ export default async function CreditCardsPage() {
                                         <span>Text Alerts:</span>
                                         <span className={card.notifySms ? "text-green-600 dark:text-green-500" : "text-muted-foreground"}>
                                             {card.notifySms ? "On" : "Off"}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span>Notify Before:</span>
-                                        <span>
-                                            {card.notifyDaysBefore}d {card.notifyHoursBefore}h
                                         </span>
                                     </div>
                                 </div>

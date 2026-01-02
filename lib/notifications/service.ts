@@ -1,13 +1,15 @@
 
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function sendEmail(to: string, subject: string, html: string) {
-    if (!process.env.RESEND_API_KEY) {
+    const apiKey = process.env.RESEND_API_KEY;
+
+    if (!apiKey) {
         console.warn("[EMAIL] No RESEND_API_KEY found, skipping email.");
         return;
     }
+
+    const resend = new Resend(apiKey);
 
     try {
         const { data, error } = await resend.emails.send({

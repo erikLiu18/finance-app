@@ -3,6 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -16,6 +17,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   creditCards CreditCard[]
+  notificationAlerts NotificationAlert[]
 
   @@map("users")
 }
@@ -28,16 +30,41 @@ model CreditCard {
   notifyEmail    Boolean  @default(false)
   notifySms      Boolean  @default(false)
   phoneNumber    String?
-  notifyDaysBefore Int    @default(3)
-  notifyHoursBefore Int   @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   lastPaidDueDate DateTime? // The due date of the last bill that was paid
-  lastNotifiedAt DateTime?  // When the last notification was sent
+  notificationLogs NotificationLog[]
 
   @@index([userId])
   @@map("credit_cards")
+}
+
+model NotificationAlert {
+  id          String   @id @default(uuid())
+  userId      String
+  hoursBefore Int      // 1-24
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("notification_alerts")
+}
+
+model NotificationLog {
+  id              String   @id @default(uuid())
+  creditCardId    String
+  alertHoursBefore Int
+  dueDate         DateTime
+  sentAt          DateTime @default(now())
+
+  creditCard CreditCard @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
+
+  @@unique([creditCardId, alertHoursBefore, dueDate])
+  @@index([creditCardId])
+  @@map("notification_logs")
 }

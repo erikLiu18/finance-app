@@ -44,13 +44,12 @@ const formSchema = z.object({
     }),
     notifyEmail: z.boolean().default(false),
     notifySms: z.boolean().default(false),
-    daysBefore: z.coerce.number().min(0).max(10).default(3),
-    hoursBefore: z.coerce.number().min(0).max(23).default(0),
 });
 
 export function AddCardDialog() {
     const [open, setOpen] = useState(false);
-    // Explicitly casting resolver to any to avoid strict type mismatch with partial default values
+    // Use Type assertion to avoid any if possible, or keep as any but disable lint line
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema) as any,
         defaultValues: {
@@ -58,10 +57,9 @@ export function AddCardDialog() {
             dueDay: "1",
             notifyEmail: false,
             notifySms: false,
-            daysBefore: 3,
-            hoursBefore: 0,
         },
     });
+    /* eslint-enable @typescript-eslint/no-explicit-any */
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         try {
@@ -81,6 +79,7 @@ export function AddCardDialog() {
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsMounted(true);
     }, []);
 
@@ -99,7 +98,7 @@ export function AddCardDialog() {
                 <DialogHeader>
                     <DialogTitle>Add Credit Card</DialogTitle>
                     <DialogDescription>
-                        Track a new credit card to receive due date notifications.
+                        Track a new credit card. Set notification timing in global settings.
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
@@ -118,58 +117,30 @@ export function AddCardDialog() {
                             )}
                         />
 
-                        <div className="grid grid-cols-3 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="dueDay"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Due Day</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select day" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                                                    <SelectItem key={day} value={day.toString()}>
-                                                        {day}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="daysBefore"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Days Before</FormLabel>
+                        <FormField
+                            control={form.control}
+                            name="dueDay"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Due Day</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl>
-                                            <Input type="number" min="0" max="10" {...field} />
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select day" />
+                                            </SelectTrigger>
                                         </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="hoursBefore"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Hours Before</FormLabel>
-                                        <FormControl>
-                                            <Input type="number" min="0" max="23" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
+                                        <SelectContent>
+                                            {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                                                <SelectItem key={day} value={day.toString()}>
+                                                    {day}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
                         <FormField
                             control={form.control}
