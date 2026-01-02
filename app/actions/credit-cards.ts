@@ -106,3 +106,50 @@ export async function updateCreditCard(id: string, formData: z.infer<typeof cred
 
     revalidatePath("/credit-cards");
 }
+
+export async function markCardAsPaid(cardId: string) {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    const card = await prisma.creditCard.findUnique({
+        where: { id: cardId, userId },
+    });
+
+    if (!card) throw new Error("Card not found");
+
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth();
+
+    let dueDate = new Date(currentYear, currentMonth, card.dueDay);
+
+    // Logic matches Cron: if date passed, move to next month.
+    if (dueDate < today) {
+        dueDate = new Date(currentYear, currentMonth + 1, card.dueDay);
+    }
+
+    await prisma.creditCard.update({
+        where: { id: cardId },
+        data: { lastPaidDueDate: dueDate },
+    });
+
+    revalidatePath("/credit-cards");
+}
+
+export async function undoMarkCardAsPaid(cardId: string) {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    const card = await prisma.creditCard.findUnique({
+        where: { id: cardId, userId },
+    });
+
+    if (!card) throw new Error("Card not found");
+
+    await prisma.creditCard.update({
+        where: { id: cardId },
+        data: { lastPaidDueDate: null },
+    });
+
+    revalidatePath("/credit-cards");
+}

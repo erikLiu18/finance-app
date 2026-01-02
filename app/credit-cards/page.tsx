@@ -1,4 +1,4 @@
-import { getCreditCards, deleteCreditCard } from "@/app/actions/credit-cards";
+import { getCreditCards, deleteCreditCard, markCardAsPaid, undoMarkCardAsPaid } from "@/app/actions/credit-cards";
 
 export const dynamic = "force-dynamic";
 import { AddCardDialog } from "@/components/add-card-dialog";
@@ -12,7 +12,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, CheckCircle } from "lucide-react";
 import { CreditCard } from "@prisma/client";
 
 export default async function CreditCardsPage() {
@@ -59,18 +59,55 @@ export default async function CreditCardsPage() {
                                     </div>
                                 </div>
                             </CardContent>
-                            <CardFooter className="flex justify-end gap-2 pt-3">
-                                <EditCardDialog card={card} />
-                                <form
-                                    action={async () => {
-                                        "use server";
-                                        await deleteCreditCard(card.id);
-                                    }}
-                                >
-                                    <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10">
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </form>
+                            <CardFooter className="flex justify-between gap-2 pt-3 items-center">
+                                {(() => {
+                                    const today = new Date();
+                                    const currentYear = today.getFullYear();
+                                    const currentMonth = today.getMonth();
+                                    let nextDueDate = new Date(currentYear, currentMonth, card.dueDay);
+                                    if (nextDueDate < today) {
+                                        nextDueDate = new Date(currentYear, currentMonth + 1, card.dueDay);
+                                    }
+                                    const isPaid = card.lastPaidDueDate &&
+                                        nextDueDate.toDateString() === card.lastPaidDueDate.toDateString();
+
+                                    if (isPaid) {
+                                        return (
+                                            <div className="flex items-center gap-2">
+                                                <div className="flex items-center text-green-600 gap-2 text-sm font-medium">
+                                                    <CheckCircle className="h-4 w-4" />
+                                                    Paid
+                                                </div>
+                                                <form action={undoMarkCardAsPaid.bind(null, card.id)}>
+                                                    <Button variant="ghost" size="sm" className="h-6 text-muted-foreground hover:text-foreground text-xs px-2">
+                                                        Undo
+                                                    </Button>
+                                                </form>
+                                            </div>
+                                        );
+                                    } else {
+                                        return (
+                                            <form action={markCardAsPaid.bind(null, card.id)}>
+                                                <Button size="sm" variant="outline" className="h-8">
+                                                    Mark Paid
+                                                </Button>
+                                            </form>
+                                        );
+                                    }
+                                })()}
+                                <div className="flex gap-2">
+                                    <EditCardDialog card={card} />
+                                    <form
+                                        action={async () => {
+                                            "use server";
+                                            await deleteCreditCard(card.id);
+                                        }}
+                                    >
+                                        <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10">
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </form>
+                                </div>
                             </CardFooter>
                         </Card>
                     ))

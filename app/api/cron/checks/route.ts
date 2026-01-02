@@ -42,6 +42,12 @@ export async function GET(request: Request) {
                 dueDate = new Date(currentYear, currentMonth + 1, card.dueDay);
             }
 
+            // Skip if already paid for this cycle
+            if (card.lastPaidDueDate &&
+                card.lastPaidDueDate.toDateString() === dueDate.toDateString()) {
+                continue;
+            }
+
             // Calculate "Notify Date"
             const notifyDate = new Date(dueDate);
             notifyDate.setDate(dueDate.getDate() - card.notifyDaysBefore);
