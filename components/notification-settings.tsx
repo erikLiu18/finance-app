@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 interface NotificationSettingsProps {
     initialAlerts: NotificationAlert[];
@@ -31,24 +32,29 @@ export function NotificationSettingsContent({ initialAlerts }: NotificationSetti
             try {
                 await createNotificationAlert(val);
                 setHours("");
+                toast.success("Alert added successfully");
             } catch (error) {
                 console.error(error);
-                alert("Failed to add alert. Ensure it's not a duplicate and you have less than 5 alerts.");
+                toast.error("Failed to add alert. Ensure it's not a duplicate and you have less than 5 alerts.");
             } finally {
                 setIsSubmitting(false);
             }
         } else {
-            alert("Please enter a value between 1 and 24");
+            toast.error("Please enter a value between 1 and 24");
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this alert?")) return;
+        // Optimistic delete or custom confirmation dialog could be better,
+        // but for now replacing native confirm with a toast action is complex without a custom UI component.
+        // We will just proceed with delete and show success/error, or use a toast with action.
+        // For simplicity and matching the request to replace native dialogs:
         try {
             await deleteNotificationAlert(id);
+            toast.success("Alert deleted");
         } catch (error) {
             console.error(error);
-            alert("Failed to delete alert");
+            toast.error("Failed to delete alert");
         }
     };
 

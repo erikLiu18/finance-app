@@ -27,6 +27,7 @@ export const metadata: Metadata = {
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { ModeToggle } from "@/components/mode-toggle";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function RootLayout({
   children,
@@ -58,6 +59,7 @@ export default function RootLayout({
               </SignedIn>
             </header>
             {children}
+            <Toaster />
           </ThemeProvider>
         </body>
       </html>

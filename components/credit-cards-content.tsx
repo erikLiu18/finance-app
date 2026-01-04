@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { CreditCard, NotificationAlert } from "@prisma/client";
 import { Pencil, Check, X, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { CreditCardList } from "@/components/credit-card-list";
 import { NotificationSettings } from "@/components/notification-settings";
@@ -85,7 +86,7 @@ export function CreditCardsContent({ creditCards: initialCreditCards, alerts }: 
             router.refresh(); // Refresh server data
         } catch (error) {
             console.error("Failed to save changes", error);
-            alert("Failed to save changes. Please try again.");
+            toast.error("Failed to save changes. Please try again.");
         } finally {
             setIsSaving(false);
         }

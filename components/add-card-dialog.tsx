@@ -35,7 +35,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-// import { toast } from "sonner"; // Removed to avoid missing provider
+import { toast } from "sonner";
 
 const formSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -69,10 +69,10 @@ export function AddCardDialog() {
             });
             setOpen(false);
             form.reset();
-            alert("Card added successfully!");
+            toast.success("Card added successfully!");
         } catch (error) {
             console.error(error);
-            alert("Failed to add card");
+            toast.error("Failed to add card");
         }
     }
 
