@@ -111,16 +111,29 @@ export async function markCardAsPaid(cardId: string) {
 
     if (!card) throw new Error("Card not found");
 
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth();
+    // Fix: Use ET time to align with Cron logic and avoid timezone issues
+    const now = new Date();
+    const etString = now.toLocaleString("en-US", { timeZone: "America/New_York", hour12: false });
+    const nowET = new Date(etString); // This creates a date object where the "local" time components match ET
 
-    let dueDate = new Date(currentYear, currentMonth, card.dueDay);
+    const currentDay = nowET.getDate();
+    const currentMonth = nowET.getMonth();
+    const currentYear = nowET.getFullYear();
 
-    // Logic matches Cron: if date passed, move to next month.
-    if (dueDate < today) {
-        dueDate = new Date(currentYear, currentMonth + 1, card.dueDay);
+    let targetMonth = currentMonth;
+    let targetYear = currentYear;
+
+    // Logic matches Cron: Only move to next month if strictly AFTER the due day.
+    // Paying ON the due day should count for the current month.
+    if (currentDay > card.dueDay) {
+        targetMonth++;
+        if (targetMonth > 11) {
+            targetMonth = 0;
+            targetYear++;
+        }
     }
+
+    const dueDate = new Date(targetYear, targetMonth, card.dueDay);
 
     await prisma.creditCard.update({
         where: { id: cardId },
