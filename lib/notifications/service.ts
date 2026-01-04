@@ -1,7 +1,8 @@
 
 import { Resend } from 'resend';
+import * as React from 'react';
 
-export async function sendEmail(to: string, subject: string, html: string) {
+export async function sendEmail(to: string, subject: string, content: string | React.ReactNode) {
     const apiKey = process.env.RESEND_API_KEY;
 
     if (!apiKey) {
@@ -12,11 +13,12 @@ export async function sendEmail(to: string, subject: string, html: string) {
     const resend = new Resend(apiKey);
 
     try {
+        const payload = typeof content === 'string' ? { html: content } : { react: content as React.ReactElement };
         const { data, error } = await resend.emails.send({
             from: 'Finance App <onboarding@resend.dev>', // Use default until domain is verified
             to: [to],
             subject: subject,
-            html: html,
+            ...payload
         });
 
         if (error) {

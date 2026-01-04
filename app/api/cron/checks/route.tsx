@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/notifications/service";
+import BillDueEmail from "@/emails/bill-due-email";
 
 export const dynamic = 'force-dynamic';
 
@@ -126,10 +127,15 @@ export async function GET(request: Request) {
 
                     if (nowET >= triggerTime) {
                         // SEND
-                        const msg = `Bill Due: ${card.name} is due on ${targetYear}-${targetMonth + 1}-${card.dueDay} by 5 PM ET.`;
+                        // const msg = `Bill Due: ${card.name} is due on ${targetYear}-${targetMonth + 1}-${card.dueDay} by 5 PM ET.`;
 
                         if (card.notifyEmail && user.email) {
-                            await sendEmail(user.email, `Bill Due Reminder: ${card.name}`, msg);
+                            await sendEmail(user.email, `Bill Due Reminder: ${card.name}`, (
+                                <BillDueEmail
+                                    cardName={card.name}
+                                    dueDate={`${targetYear}-${targetMonth + 1}-${card.dueDay}`}
+                                />
+                            ));
                         }
                         if (card.notifySms) {
                             // Assuming we have a phone number, logic placeholder
