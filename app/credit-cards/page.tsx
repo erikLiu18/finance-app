@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 import { AddCardDialog } from "@/components/add-card-dialog";
 import { EditCardDialog } from "@/components/edit-card-dialog";
 import { NotificationSettings } from "@/components/notification-settings";
+import { MobileNotificationSettings } from "@/components/mobile-notification-settings";
 import {
     Card,
     CardContent,
@@ -30,12 +31,13 @@ export default async function CreditCardsPage() {
                     </p>
                 </div>
                 <div className="flex gap-2">
+                    <MobileNotificationSettings alerts={alerts} />
                     <AddCardDialog />
                 </div>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-6 items-start">
-                <div className="w-full md:w-1/3 lg:w-1/4">
+            <div className="flex flex-col md:flex-row gap-6 md:items-start">
+                <div className="hidden md:block w-full md:w-1/3 lg:w-1/4">
                     <NotificationSettings initialAlerts={alerts} />
                 </div>
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
