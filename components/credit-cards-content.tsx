@@ -132,12 +132,11 @@ export function CreditCardsContent({ creditCards: initialCreditCards, alerts }: 
                             {/* Only show Edit if there are cards to edit */}
                             {cards.length > 0 && (
                                 <Button
-                                    variant="ghost"
-                                    size="sm"
+                                    variant="outline"
+                                    size="icon"
                                     onClick={() => setIsEditMode(true)}
                                 >
-                                    <Pencil className="h-4 w-4 mr-2" />
-                                    Edit
+                                    <Pencil className="h-4 w-4" />
                                 </Button>
                             )}
                             <AddCardDialog />
