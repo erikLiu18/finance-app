@@ -5,6 +5,7 @@ import { CreditCard } from "@prisma/client";
 
 import { markCardAsPaid, undoMarkCardAsPaid } from "@/app/actions/credit-cards";
 import { Button } from "@/components/ui/button";
+import { Status, StatusIndicator, StatusLabel } from "@/components/ui/shadcn-io/status";
 import {
     Card,
     CardContent,
@@ -88,15 +89,7 @@ export function CreditCardItem({ card, isEditMode, onUpdate, onDelete }: CreditC
                         />
                     </div>
 
-                    <div className="flex flex-row items-center justify-between rounded-lg border p-2 shadow-sm bg-background">
-                        <Label className="cursor-pointer text-xs" htmlFor={`sms-${card.id}`}>SMS Alerts</Label>
-                        <Switch
-                            id={`sms-${card.id}`}
-                            checked={card.notifySms}
-                            onCheckedChange={(checked) => onUpdate?.(card.id, "notifySms", checked)}
-                            className="scale-75 origin-right"
-                        />
-                    </div>
+
                 </CardContent>
             </Card>
         );
@@ -143,9 +136,9 @@ export function CreditCardItem({ card, isEditMode, onUpdate, onDelete }: CreditC
     };
 
     return (
-        <Card className="flex flex-col">
-            <CardHeader className="flex flex-row items-center justify-between pb-3 space-y-0">
-                <div className="space-y-1">
+        <Card className="flex flex-col gap-4">
+            <CardHeader className="flex flex-row items-center justify-between pb-1 space-y-0">
+                <div className="space-y-0">
                     <CardTitle className="text-lg">{card.name}</CardTitle>
                     <CardDescription>Due in {timeRemainingText} on the {card.dueDay}{getOrdinalSuffix(card.dueDay)}</CardDescription>
                 </div>
@@ -170,18 +163,13 @@ export function CreditCardItem({ card, isEditMode, onUpdate, onDelete }: CreditC
             </CardHeader>
             <CardContent className="flex-1">
                 <div className="flex flex-col gap-2 text-sm">
-                    <div className="flex justify-between">
-                        <span>Email Alerts:</span>
-                        <span className={card.notifyEmail ? "text-green-600 dark:text-green-500" : "text-muted-foreground"}>
-                            {card.notifyEmail ? "On" : "Off"}
-                        </span>
+                    <div className="flex justify-start items-center h-8">
+                        <Status status={card.notifyEmail ? "online" : "offline"}>
+                            <StatusIndicator />
+                            <StatusLabel>Email</StatusLabel>
+                        </Status>
                     </div>
-                    <div className="flex justify-between">
-                        <span>Text Alerts:</span>
-                        <span className={card.notifySms ? "text-green-600 dark:text-green-500" : "text-muted-foreground"}>
-                            {card.notifySms ? "On" : "Off"}
-                        </span>
-                    </div>
+
                 </div>
             </CardContent>
         </Card>
