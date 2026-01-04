@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle, X } from "lucide-react";
+import { CheckCircle, X, Banknote } from "lucide-react";
 import { CreditCard } from "@prisma/client";
 
 import { markCardAsPaid, undoMarkCardAsPaid } from "@/app/actions/credit-cards";
@@ -144,9 +144,29 @@ export function CreditCardItem({ card, isEditMode, onUpdate, onDelete }: CreditC
 
     return (
         <Card className="flex flex-col">
-            <CardHeader className="pb-3">
-                <CardTitle className="text-lg">{card.name}</CardTitle>
-                <CardDescription>Due in {timeRemainingText} on the {card.dueDay}{getOrdinalSuffix(card.dueDay)}</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between pb-3 space-y-0">
+                <div className="space-y-1">
+                    <CardTitle className="text-lg">{card.name}</CardTitle>
+                    <CardDescription>Due in {timeRemainingText} on the {card.dueDay}{getOrdinalSuffix(card.dueDay)}</CardDescription>
+                </div>
+                {isPaid ? (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-green-600 hover:text-green-700 hover:bg-green-100 dark:hover:bg-green-900/20"
+                        onClick={() => undoMarkCardAsPaid(card.id)}
+                    >
+                        <CheckCircle className="h-5 w-5" />
+                    </Button>
+                ) : (
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => markCardAsPaid(card.id)}
+                    >
+                        <Banknote className="h-5 w-5" />
+                    </Button>
+                )}
             </CardHeader>
             <CardContent className="flex-1">
                 <div className="flex flex-col gap-2 text-sm">
@@ -164,33 +184,6 @@ export function CreditCardItem({ card, isEditMode, onUpdate, onDelete }: CreditC
                     </div>
                 </div>
             </CardContent>
-            <CardFooter className="flex justify-between gap-2 pt-3 items-center">
-                {isPaid ? (
-                    <div className="flex items-center gap-2">
-                        <div className="flex items-center text-green-600 gap-2 text-sm font-medium">
-                            <CheckCircle className="h-4 w-4" />
-                            Paid
-                        </div>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 text-muted-foreground hover:text-foreground text-xs px-2"
-                            onClick={() => undoMarkCardAsPaid(card.id)}
-                        >
-                            Undo
-                        </Button>
-                    </div>
-                ) : (
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8"
-                        onClick={() => markCardAsPaid(card.id)}
-                    >
-                        Mark Paid
-                    </Button>
-                )}
-            </CardFooter>
         </Card>
     );
 }
