@@ -102,11 +102,51 @@ export function CreditCardItem({ card, isEditMode, onUpdate, onDelete }: CreditC
         );
     }
 
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
+    // Due date is at 00:00:00 of the specified day
+    let dueDate = new Date(currentYear, currentMonth, card.dueDay);
+    // Deadline is the end of that day (effectively 00:00:00 of the next day)
+    let deadline = new Date(currentYear, currentMonth, card.dueDay + 1);
+
+    // If the deadline has passed, the due date is next month
+    if (deadline < now) {
+        dueDate = new Date(currentYear, currentMonth + 1, card.dueDay);
+        deadline = new Date(currentYear, currentMonth + 1, card.dueDay + 1);
+    }
+
+    const diffTime = deadline.getTime() - now.getTime();
+    const hoursRemaining = diffTime / (1000 * 60 * 60);
+
+    let timeRemainingText = "";
+    if (hoursRemaining < 24) {
+        const h = Math.ceil(hoursRemaining);
+        timeRemainingText = `${h} ${h === 1 ? "hour" : "hours"}`;
+    } else {
+        const d = Math.ceil(hoursRemaining / 24);
+        timeRemainingText = `${d} ${d === 1 ? "day" : "days"}`;
+    }
+
+    const isPaid = card.lastPaidDueDate &&
+        dueDate.toDateString() === card.lastPaidDueDate.toDateString();
+
+    const getOrdinalSuffix = (day: number) => {
+        if (day > 3 && day < 21) return 'th';
+        switch (day % 10) {
+            case 1: return "st";
+            case 2: return "nd";
+            case 3: return "rd";
+            default: return "th";
+        }
+    };
+
     return (
         <Card className="flex flex-col">
             <CardHeader className="pb-3">
                 <CardTitle className="text-lg">{card.name}</CardTitle>
-                <CardDescription>Due on the {card.dueDay}th</CardDescription>
+                <CardDescription>Due in {timeRemainingText} on the {card.dueDay}{getOrdinalSuffix(card.dueDay)}</CardDescription>
             </CardHeader>
             <CardContent className="flex-1">
                 <div className="flex flex-col gap-2 text-sm">
@@ -125,47 +165,31 @@ export function CreditCardItem({ card, isEditMode, onUpdate, onDelete }: CreditC
                 </div>
             </CardContent>
             <CardFooter className="flex justify-between gap-2 pt-3 items-center">
-                {(() => {
-                    const today = new Date();
-                    const currentYear = today.getFullYear();
-                    const currentMonth = today.getMonth();
-                    let nextDueDate = new Date(currentYear, currentMonth, card.dueDay);
-                    if (nextDueDate < today) {
-                        nextDueDate = new Date(currentYear, currentMonth + 1, card.dueDay);
-                    }
-                    const isPaid = card.lastPaidDueDate &&
-                        nextDueDate.toDateString() === card.lastPaidDueDate.toDateString();
-
-                    if (isPaid) {
-                        return (
-                            <div className="flex items-center gap-2">
-                                <div className="flex items-center text-green-600 gap-2 text-sm font-medium">
-                                    <CheckCircle className="h-4 w-4" />
-                                    Paid
-                                </div>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 text-muted-foreground hover:text-foreground text-xs px-2"
-                                    onClick={() => undoMarkCardAsPaid(card.id)}
-                                >
-                                    Undo
-                                </Button>
-                            </div>
-                        );
-                    } else {
-                        return (
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-8"
-                                onClick={() => markCardAsPaid(card.id)}
-                            >
-                                Mark Paid
-                            </Button>
-                        );
-                    }
-                })()}
+                {isPaid ? (
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center text-green-600 gap-2 text-sm font-medium">
+                            <CheckCircle className="h-4 w-4" />
+                            Paid
+                        </div>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 text-muted-foreground hover:text-foreground text-xs px-2"
+                            onClick={() => undoMarkCardAsPaid(card.id)}
+                        >
+                            Undo
+                        </Button>
+                    </div>
+                ) : (
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8"
+                        onClick={() => markCardAsPaid(card.id)}
+                    >
+                        Mark Paid
+                    </Button>
+                )}
             </CardFooter>
         </Card>
     );
