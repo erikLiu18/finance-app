@@ -133,11 +133,14 @@ export async function markCardAsPaid(cardId: string) {
         }
     }
 
-    const dueDate = new Date(targetYear, targetMonth, card.dueDay);
+    // Format: YYYY-MM-DD (e.g., "2026-01-15")
+    const mm = (targetMonth + 1).toString().padStart(2, "0");
+    const dd = card.dueDay.toString().padStart(2, "0");
+    const dueDateString = `${targetYear}-${mm}-${dd}`;
 
     await prisma.creditCard.update({
         where: { id: cardId },
-        data: { lastPaidDueDate: dueDate },
+        data: { lastPaidDueDate: dueDateString },
     });
 
     revalidatePath("/credit-cards");

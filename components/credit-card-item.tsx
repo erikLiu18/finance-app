@@ -6,6 +6,7 @@ import { CreditCard } from "@prisma/client";
 import { markCardAsPaid, undoMarkCardAsPaid } from "@/app/actions/credit-cards";
 import { Button } from "@/components/ui/button";
 import { Status, StatusIndicator, StatusLabel } from "@/components/ui/shadcn-io/status";
+import { toast } from "sonner";
 import {
     Card,
     CardContent,
@@ -122,8 +123,7 @@ export function CreditCardItem({ card, isEditMode, onUpdate, onDelete }: CreditC
         timeRemainingText = `${d} ${d === 1 ? "day" : "days"}`;
     }
 
-    const isPaid = card.lastPaidDueDate &&
-        dueDate.toDateString() === card.lastPaidDueDate.toDateString();
+    const isPaid = card.lastPaidDueDate === `${dueDate.getFullYear()}-${(dueDate.getMonth() + 1).toString().padStart(2, "0")}-${dueDate.getDate().toString().padStart(2, "0")}`;
 
     const getOrdinalSuffix = (day: number) => {
         if (day > 3 && day < 21) return 'th';
@@ -133,6 +133,22 @@ export function CreditCardItem({ card, isEditMode, onUpdate, onDelete }: CreditC
             case 3: return "rd";
             default: return "th";
         }
+    };
+
+    const handleMarkAsPaid = () => {
+        toast.promise(markCardAsPaid(card.id), {
+            loading: "Marking as paid...",
+            success: "Card marked as paid",
+            error: "Failed to mark as paid",
+        });
+    };
+
+    const handleUndoMarkAsPaid = () => {
+        toast.promise(undoMarkCardAsPaid(card.id), {
+            loading: "Undoing...",
+            success: "Mark as paid undone",
+            error: "Failed to undo",
+        });
     };
 
     return (
@@ -147,7 +163,7 @@ export function CreditCardItem({ card, isEditMode, onUpdate, onDelete }: CreditC
                         variant="ghost"
                         size="icon"
                         className="text-green-600 hover:text-green-700 hover:bg-green-100 dark:hover:bg-green-900/20"
-                        onClick={() => undoMarkCardAsPaid(card.id)}
+                        onClick={handleUndoMarkAsPaid}
                     >
                         <CheckCircle className="h-5 w-5" />
                     </Button>
@@ -155,7 +171,7 @@ export function CreditCardItem({ card, isEditMode, onUpdate, onDelete }: CreditC
                     <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => markCardAsPaid(card.id)}
+                        onClick={handleMarkAsPaid}
                     >
                         <Banknote className="h-5 w-5" />
                     </Button>
