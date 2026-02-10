@@ -68,7 +68,8 @@ export function CreditCardsContent({ creditCards: initialCreditCards, sharedCard
                     current.name !== original.name ||
                     current.dueDay !== original.dueDay ||
                     current.notifyEmail !== original.notifyEmail ||
-                    current.notifySms !== original.notifySms
+                    current.notifySms !== original.notifySms ||
+                    current.notes !== original.notes
                 );
             });
 
@@ -80,7 +81,8 @@ export function CreditCardsContent({ creditCards: initialCreditCards, sharedCard
                 name: card.name,
                 dueDay: card.dueDay,
                 notifyEmail: card.notifyEmail,
-                notifySms: card.notifySms
+                notifySms: card.notifySms,
+                notes: card.notes || undefined,
             })));
 
             setIsEditMode(false);

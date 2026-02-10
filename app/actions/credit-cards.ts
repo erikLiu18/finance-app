@@ -11,6 +11,7 @@ const creditCardSchema = z.object({
     dueDay: z.coerce.number().min(1).max(31),
     notifyEmail: z.boolean().default(false),
     notifySms: z.boolean().default(false),
+    notes: z.string().max(50, "Notes must be 50 characters or less").optional(),
 });
 
 export async function getCreditCards() {
@@ -33,7 +34,7 @@ export async function addCreditCard(formData: z.infer<typeof creditCardSchema>) 
         throw new Error("Invalid fields");
     }
 
-    const { name, dueDay, notifyEmail, notifySms } = validatedFields.data;
+    const { name, dueDay, notifyEmail, notifySms, notes } = validatedFields.data;
 
     const email = user.emailAddresses[0]?.emailAddress ?? "no-email@example.com";
 
@@ -52,8 +53,8 @@ export async function addCreditCard(formData: z.infer<typeof creditCardSchema>) 
             userId,
             name,
             dueDay,
-            notifyEmail,
             notifySms,
+            notes,
         },
     });
 
@@ -83,7 +84,7 @@ export async function updateCreditCard(id: string, formData: z.infer<typeof cred
         throw new Error("Invalid fields");
     }
 
-    const { name, dueDay, notifyEmail, notifySms } = validatedFields.data;
+    const { name, dueDay, notifyEmail, notifySms, notes } = validatedFields.data;
 
     await prisma.creditCard.update({
         where: {
@@ -93,8 +94,8 @@ export async function updateCreditCard(id: string, formData: z.infer<typeof cred
         data: {
             name,
             dueDay,
-            notifyEmail,
             notifySms,
+            notes,
         },
     });
 

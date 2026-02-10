@@ -90,6 +90,19 @@ export function CreditCardItem({ card, isEditMode, onUpdate, onDelete }: CreditC
                         </div>
                     </div>
 
+                    <div className="space-y-1">
+                        <Label htmlFor={`notes-${card.id}`} className="text-xs">Notes</Label>
+                        <Input
+                            id={`notes-${card.id}`}
+                            value={card.notes || ""}
+                            onChange={(e) => onUpdate?.(card.id, "notes", e.target.value.slice(0, 50))}
+                            className="h-8"
+                            placeholder="Add a note (max 50 chars)"
+                            maxLength={50}
+                            disabled={isShared}
+                        />
+                    </div>
+
                     <div className="flex flex-row items-center justify-between rounded-lg border p-2 shadow-sm bg-background">
                         <Label className="cursor-pointer text-xs" htmlFor={`email-${card.id}`}>Email Alerts</Label>
                         <Switch
@@ -163,52 +176,68 @@ export function CreditCardItem({ card, isEditMode, onUpdate, onDelete }: CreditC
     };
 
     return (
-        <Card className="flex flex-col gap-4">
-            <CardHeader className="flex flex-row items-center justify-between pb-1 space-y-0">
-                <div className="space-y-0">
-                    <CardTitle className="text-lg">{card.name}</CardTitle>
-                    <CardDescription>Due in {timeRemainingText} on the {card.dueDay}{getOrdinalSuffix(card.dueDay)}</CardDescription>
-                </div>
-                {isPaid ? (
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-green-600 hover:text-green-700 hover:bg-green-100 dark:hover:bg-green-900/20"
-                        onClick={handleUndoMarkAsPaid}
-                    >
-                        <CheckCircle className="h-5 w-5" />
-                    </Button>
-                ) : (
-                    !isShared && (
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={handleMarkAsPaid}
-                        >
-                            <Banknote className="h-5 w-5" />
-                        </Button>
-                    )
-                )}
-            </CardHeader>
-            <CardContent className="flex-1">
-                <div className="flex flex-col gap-2 text-sm">
-                    <div className="flex justify-start items-center h-8">
+        <Card className="flex flex-col h-full">
+            <CardContent className="flex flex-row justify-between items-start gap-4 p-5 h-full">
+                {/* Left Column: Info & Alerts */}
+                <div className="flex flex-col gap-3 flex-1">
+                    <div className="space-y-1">
+                        <h3 className="text-lg font-semibold leading-none tracking-tight">{card.name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                            Due in {timeRemainingText} on the {card.dueDay}{getOrdinalSuffix(card.dueDay)}
+                        </p>
+                        {card.notes && (
+                            <div className="text-sm text-primary font-medium mt-1">
+                                {card.notes}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-2 mt-auto">
                         <Status status={card.notifyEmail ? "online" : "offline"}>
                             <StatusIndicator />
-                            <StatusLabel>Email</StatusLabel>
+                            <StatusLabel className="text-xs">Email</StatusLabel>
                         </Status>
                     </div>
 
+                    {isShared && (
+                        <div className="text-xs text-muted-foreground italic">
+                            Shared by {card.sharedByEmail}
+                        </div>
+                    )}
                 </div>
-                {isShared ? (
-                    <div className="text-xs text-muted-foreground italic mt-2">
-                        Shared by {card.sharedByEmail}
-                    </div>
-                ) : (
-                    <div className="flex justify-end mt-2">
-                        <ShareCardDialog cardId={card.id} cardName={card.name} />
-                    </div>
-                )}
+
+                {/* Right Column: Actions */}
+                <div className="flex flex-col gap-2 items-end">
+                    {isPaid ? (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-green-600 hover:text-green-700 hover:bg-green-100 dark:hover:bg-green-900/20 h-8 w-8"
+                            onClick={handleUndoMarkAsPaid}
+                            title="Mark as unpaid"
+                        >
+                            <CheckCircle className="h-5 w-5" />
+                        </Button>
+                    ) : (
+                        !isShared && (
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={handleMarkAsPaid}
+                                title="Mark as paid"
+                                className="h-8 w-8"
+                            >
+                                <Banknote className="h-4 w-4" />
+                            </Button>
+                        )
+                    )}
+
+                    {!isShared && (
+                        <div className="scale-90 origin-right">
+                            <ShareCardDialog cardId={card.id} cardName={card.name} />
+                        </div>
+                    )}
+                </div>
             </CardContent>
         </Card>
     );
