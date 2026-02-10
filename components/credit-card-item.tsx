@@ -7,6 +7,7 @@ import { markCardAsPaid, undoMarkCardAsPaid } from "@/app/actions/credit-cards";
 import { Button } from "@/components/ui/button";
 import { Status, StatusIndicator, StatusLabel } from "@/components/ui/shadcn-io/status";
 import { toast } from "sonner";
+import { ShareCardDialog } from "@/components/share-card-dialog";
 import {
     Card,
     CardContent,
@@ -27,13 +28,14 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
 interface CreditCardItemProps {
-    card: CreditCard;
+    card: CreditCard & { sharedByEmail?: string | null };
     isEditMode: boolean;
     onUpdate?: (id: string, field: keyof CreditCard, value: any) => void;
     onDelete?: (id: string) => void;
 }
 
 export function CreditCardItem({ card, isEditMode, onUpdate, onDelete }: CreditCardItemProps) {
+    const isShared = !!card.sharedByEmail;
 
     if (isEditMode) {
         return (
@@ -41,14 +43,20 @@ export function CreditCardItem({ card, isEditMode, onUpdate, onDelete }: CreditC
                 <Button
                     variant="destructive"
                     size="icon"
-                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-md z-10"
+                    className={isShared ? "hidden" : "absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-md z-10"}
                     onClick={() => onDelete?.(card.id)}
                     type="button"
+                    disabled={isShared}
                 >
                     <X className="h-3 w-3" />
                 </Button>
 
                 <CardContent className="flex-1 space-y-2 px-5 py-3">
+                    {isShared && (
+                        <div className="text-xs text-muted-foreground italic mb-1">
+                            Shared by {card.sharedByEmail}
+                        </div>
+                    )}
                     <div className="flex gap-2">
                         <div className="space-y-1 flex-1">
                             <Label htmlFor={`name-${card.id}`} className="text-xs">Card Name</Label>
@@ -57,6 +65,7 @@ export function CreditCardItem({ card, isEditMode, onUpdate, onDelete }: CreditC
                                 value={card.name}
                                 onChange={(e) => onUpdate?.(card.id, "name", e.target.value)}
                                 className="h-8"
+                                disabled={isShared}
                             />
                         </div>
 
@@ -65,6 +74,7 @@ export function CreditCardItem({ card, isEditMode, onUpdate, onDelete }: CreditC
                             <Select
                                 value={card.dueDay.toString()}
                                 onValueChange={(val) => onUpdate?.(card.id, "dueDay", Number(val))}
+                                disabled={isShared}
                             >
                                 <SelectTrigger className="h-8 px-2">
                                     <SelectValue placeholder="Due" />
@@ -87,12 +97,13 @@ export function CreditCardItem({ card, isEditMode, onUpdate, onDelete }: CreditC
                             checked={card.notifyEmail}
                             onCheckedChange={(checked) => onUpdate?.(card.id, "notifyEmail", checked)}
                             className="scale-75 origin-right"
+                            disabled={isShared}
                         />
                     </div>
 
 
                 </CardContent>
-            </Card>
+            </Card >
         );
     }
 
@@ -168,13 +179,15 @@ export function CreditCardItem({ card, isEditMode, onUpdate, onDelete }: CreditC
                         <CheckCircle className="h-5 w-5" />
                     </Button>
                 ) : (
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={handleMarkAsPaid}
-                    >
-                        <Banknote className="h-5 w-5" />
-                    </Button>
+                    !isShared && (
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={handleMarkAsPaid}
+                        >
+                            <Banknote className="h-5 w-5" />
+                        </Button>
+                    )
                 )}
             </CardHeader>
             <CardContent className="flex-1">
@@ -187,6 +200,15 @@ export function CreditCardItem({ card, isEditMode, onUpdate, onDelete }: CreditC
                     </div>
 
                 </div>
+                {isShared ? (
+                    <div className="text-xs text-muted-foreground italic mt-2">
+                        Shared by {card.sharedByEmail}
+                    </div>
+                ) : (
+                    <div className="flex justify-end mt-2">
+                        <ShareCardDialog cardId={card.id} cardName={card.name} />
+                    </div>
+                )}
             </CardContent>
         </Card>
     );

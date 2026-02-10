@@ -17,6 +17,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   creditCards CreditCard[]
+  sharedCreditCards SharedCreditCard[]
   notificationAlerts NotificationAlert[]
 
   @@map("users")
@@ -37,6 +38,7 @@ model CreditCard {
   
   lastPaidDueDate String? // The due date of the last bill that was paid, formatted "YYYY-MM-DD"
   notificationLogs NotificationLog[]
+  sharedWith SharedCreditCard[]
 
   @@index([userId])
   @@map("credit_cards")
@@ -67,4 +69,18 @@ model NotificationLog {
   @@unique([creditCardId, alertHoursBefore, dueDate])
   @@index([creditCardId])
   @@map("notification_logs")
+}
+
+model SharedCreditCard {
+  id           String     @id @default(uuid())
+  creditCardId String
+  userId       String     // The user receiving the share
+  createdAt    DateTime   @default(now())
+
+  creditCard   CreditCard @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([creditCardId, userId])
+  @@index([userId])
+  @@map("shared_credit_cards")
 }

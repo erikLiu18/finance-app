@@ -4,7 +4,7 @@ import { CreditCard } from "@prisma/client";
 import { CreditCardItem } from "@/components/credit-card-item";
 
 interface CreditCardListProps {
-    creditCards: CreditCard[];
+    creditCards: (CreditCard & { sharedByEmail?: string | null })[];
     isEditMode: boolean;
     onUpdate?: (id: string, field: keyof CreditCard, value: any) => void;
     onDelete?: (id: string) => void;

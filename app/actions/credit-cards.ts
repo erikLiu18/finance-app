@@ -1,6 +1,6 @@
 "use server";
 
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth, currentUser, clerkClient } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -215,4 +215,133 @@ export async function deleteNotificationAlert(id: string) {
     });
 
     revalidatePath("/credit-cards");
+}
+
+export async function getSharedCreditCards() {
+    const { userId } = await auth();
+    if (!userId) return [];
+
+    const sharedCards = await prisma.sharedCreditCard.findMany({
+        where: { userId },
+        include: {
+            creditCard: {
+                include: {
+                    user: {
+                        select: { email: true }
+                    }
+                }
+            }
+        }
+    });
+
+    return sharedCards.map(sc => ({
+        ...sc.creditCard,
+        sharedByEmail: sc.creditCard.user.email
+    }));
+}
+
+export async function shareCreditCard(cardId: string, email: string) {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    // 1. Find the user to share with
+    let userToShareWith = await prisma.user.findUnique({
+        where: { email }
+    });
+
+    if (!userToShareWith) {
+        // Try to find in Clerk and sync
+        try {
+            const client = await clerkClient();
+            const clerkUsers = await client.users.getUserList({ emailAddress: [email] });
+
+            if (clerkUsers.data.length > 0) {
+                const clerkUser = clerkUsers.data[0];
+                const primaryEmail = clerkUser.emailAddresses.find(e => e.id === clerkUser.primaryEmailAddressId)?.emailAddress || clerkUser.emailAddresses[0].emailAddress;
+
+                userToShareWith = await prisma.user.create({
+                    data: {
+                        id: clerkUser.id,
+                        email: primaryEmail,
+                    }
+                });
+            }
+        } catch (error) {
+            console.error("Failed to fetch user from Clerk", error);
+        }
+    }
+
+    if (!userToShareWith) {
+        throw new Error("User with this email not found. They must sign up first.");
+    }
+
+    if (userToShareWith.id === userId) {
+        throw new Error("You cannot share a card with yourself.");
+    }
+
+    // 2. Verify ownership
+    const card = await prisma.creditCard.findUnique({
+        where: { id: cardId, userId }
+    });
+
+    if (!card) throw new Error("Card not found or you are not the owner.");
+
+    // 3. Create share
+    try {
+        await prisma.sharedCreditCard.create({
+            data: {
+                creditCardId: cardId,
+                userId: userToShareWith.id
+            }
+        });
+    } catch (error) {
+        // Unique constraint violation means already shared
+        throw new Error("Card is already shared with this user.");
+    }
+
+    revalidatePath("/credit-cards");
+}
+
+export async function unshareCreditCard(cardId: string, userIdToUnshare: string) {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    // Verify ownership of the card
+    const card = await prisma.creditCard.findUnique({
+        where: { id: cardId, userId }
+    });
+
+    if (!card) throw new Error("Card not found or you are not the owner.");
+
+    await prisma.sharedCreditCard.deleteMany({
+        where: {
+            creditCardId: cardId,
+            userId: userIdToUnshare
+        }
+    });
+
+    revalidatePath("/credit-cards");
+}
+
+export async function getCardSharedUsers(cardId: string) {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    // Verify ownership
+    const card = await prisma.creditCard.findUnique({
+        where: { id: cardId, userId }
+    });
+
+    if (!card) return []; // Or throw error, but empty list is safer for UI
+
+    const shared = await prisma.sharedCreditCard.findMany({
+        where: { creditCardId: cardId },
+        include: {
+            user: {
+                select: { id: true, email: true }
+            }
+        }
+    });
+
+    return shared.map(s => s.user);
 }

@@ -15,10 +15,11 @@ import { updateCreditCard, deleteCreditCard } from "@/app/actions/credit-cards";
 
 interface CreditCardsContentProps {
     creditCards: CreditCard[];
+    sharedCards: (CreditCard & { sharedByEmail?: string | null })[];
     alerts: NotificationAlert[];
 }
 
-export function CreditCardsContent({ creditCards: initialCreditCards, alerts }: CreditCardsContentProps) {
+export function CreditCardsContent({ creditCards: initialCreditCards, sharedCards, alerts }: CreditCardsContentProps) {
     const router = useRouter();
     const [cards, setCards] = useState<CreditCard[]>(initialCreditCards);
     const [isEditMode, setIsEditMode] = useState(false);
@@ -157,6 +158,17 @@ export function CreditCardsContent({ creditCards: initialCreditCards, alerts }: 
                         onUpdate={handleUpdate}
                         onDelete={handleDelete}
                     />
+
+                    {sharedCards.length > 0 && (
+                        <div className="mt-10">
+                            <h2 className="text-xl font-bold mb-4">Shared Cards</h2>
+                            <CreditCardList
+                                creditCards={sharedCards}
+                                isEditMode={isEditMode}
+                            // Shared cards are read-only, so no update/delete handlers
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
