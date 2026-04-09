@@ -53,6 +53,7 @@ export async function addCreditCard(formData: z.infer<typeof creditCardSchema>) 
             userId,
             name,
             dueDay,
+            notifyEmail,
             notifySms,
             notes,
         },
@@ -94,6 +95,7 @@ export async function updateCreditCard(id: string, formData: z.infer<typeof cred
         data: {
             name,
             dueDay,
+            notifyEmail,
             notifySms,
             notes,
         },
