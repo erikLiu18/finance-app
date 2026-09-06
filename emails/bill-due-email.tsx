@@ -46,7 +46,7 @@ export const BillDueEmail = ({
                         </Text>
                     )}
                     <Section style={btnContainer}>
-                        <Button style={button} href="https://finance.erik.io">
+                        <Button style={button} href="https://cardalert.up.railway.app/credit-cards">
                             View Dashboard
                         </Button>
                     </Section>
