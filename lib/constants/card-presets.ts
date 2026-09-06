@@ -14,18 +14,19 @@ export const CREDIT_CARD_PRESETS: CardPreset[] = [
         fullName: "The Platinum Card® from American Express",
         shortName: "Amex Platinum",
         issuer: "American Express",
-        annualFee: 695,
-        annualFeeDisplay: "$695",
+        annualFee: 895,
+        annualFeeDisplay: "$895",
         benefits: [
             "5x Membership Rewards® points on flights booked directly with airlines or with American Express Travel (up to $500,000 per calendar year)",
             "5x Membership Rewards® points on prepaid hotels booked on amextravel.com",
-            "$200 Annual Hotel Credit (prepaid Fine Hotels + Resorts® or The Hotel Collection bookings)",
-            "$240 Annual Digital Entertainment Credit (up to $20/month back on eligible subscriptions)",
+            "$600 Annual Hotel Credit ($300 semi-annually on prepaid Fine Hotels + Resorts® or The Hotel Collection bookings)",
+            "$400 Annual Resy Dining Credit (up to $100 per quarter for eligible Resy purchases)",
+            "$300 Annual Digital Entertainment Credit (for eligible streaming & digital subscriptions)",
+            "$300 Annual lululemon Credit for eligible purchases",
             "$200 Annual Airline Incidental Fee Credit with selected qualifying airline",
-            "$200 Annual Uber Cash ($15/month plus $35 in December for US rides and orders)",
-            "$199 Annual CLEAR® Plus Credit",
-            "$100 Annual Saks Fifth Avenue Credit (up to $50 semi-annually)",
-            "American Express Global Lounge Collection® (Centurion Lounges, Priority Pass™, Delta Sky Club® when flying Delta)"
+            "$200 Annual Uber Cash ($15/month plus $20 in December for US rides and orders) + Uber One credit",
+            "$120 Global Entry or $85 TSA PreCheck® application fee credit every 4 years",
+            "American Express Global Lounge Collection® (Access to 1,550+ lounges: Centurion Lounges, Priority Pass™, Delta Sky Club® when flying Delta)"
         ],
     },
     {
@@ -39,7 +40,8 @@ export const CREDIT_CARD_PRESETS: CardPreset[] = [
             "5% cash back on travel purchased through Chase Travel",
             "3% cash back on dining at restaurants, including takeout and eligible delivery services",
             "3% cash back on drugstore purchases",
-            "1.5% unlimited cash back on all other purchases"
+            "1.5% unlimited cash back on all other purchases",
+            "Points can be pooled with premium Chase Ultimate Rewards® cards for travel partner transfers"
         ],
     },
     {
@@ -54,7 +56,8 @@ export const CREDIT_CARD_PRESETS: CardPreset[] = [
             "5% cash back on travel purchased through Chase Travel",
             "3% cash back on dining at restaurants, including takeout and delivery",
             "3% cash back on drugstore purchases",
-            "1% cash back on all other purchases"
+            "1% cash back on all other purchases",
+            "Cell phone protection (up to $800 per claim) & no foreign transaction fees"
         ],
     },
     {
@@ -67,8 +70,8 @@ export const CREDIT_CARD_PRESETS: CardPreset[] = [
         benefits: [
             "5% cash back on everyday purchases at different places each quarter up to the quarterly maximum (requires activation)",
             "1% unlimited cash back on all other purchases automatically",
-            "Unlimited Cashback Match: Discover matches all the cash back you've earned at the end of your first year",
-            "No foreign transaction fees"
+            "Unlimited Cashback Match: Discover automatically matches all the cash back earned at the end of your first year",
+            "No foreign transaction fees & no annual fee"
         ],
     },
     {
@@ -82,7 +85,8 @@ export const CREDIT_CARD_PRESETS: CardPreset[] = [
             "2x miles on dining at restaurants worldwide, including takeout and delivery",
             "2x miles at U.S. supermarkets",
             "2x miles on Delta purchases",
-            "First checked bag free on Delta flights for you and up to 8 companions on the same reservation",
+            "First and second checked bags free on domestic Delta flights for you and companions on same reservation",
+            "Up to $120 annual Rideshare Credit ($10/month on select U.S. rideshare providers after first card renewal)",
             "TakeOff 15: 15% off when booking Award Travel on Delta flights using miles",
             "$200 Delta Flight Credit after spending $10,000 in purchases in a calendar year",
             "Main Cabin 1 Priority Boarding on Delta flights"
@@ -97,12 +101,13 @@ export const CREDIT_CARD_PRESETS: CardPreset[] = [
         annualFeeDisplay: "$95",
         benefits: [
             "5x total points on travel purchased through Chase Travel",
-            "3x points on dining, select streaming services, and online grocery purchases (excluding Target, Walmart, and wholesale clubs)",
+            "3x points on dining worldwide, gas stations & EV charging, vacation rentals (Airbnb, Vrbo), and select streaming & online groceries",
             "2x points on all other travel purchases",
-            "$50 Annual Chase Travel Hotel Credit",
+            "Up to $100 Annual Chase Travel Hotel Credit each anniversary year",
+            "Up to $120 Global Entry / TSA PreCheck / NEXUS fee credit every 4 years",
             "10% Anniversary points boost based on total annual card spending",
-            "1:1 point transfers to leading airline and hotel loyalty programs",
-            "Auto Rental Collision Damage Waiver (primary coverage) & Trip Cancellation/Interruption Insurance"
+            "Complimentary 1-year Apple TV subscription & complimentary DashPass with $10/mo credit",
+            "Auto Rental Collision Damage Waiver (primary coverage), Emergency Evacuation & Trip Cancellation Insurance"
         ],
     },
 ];
