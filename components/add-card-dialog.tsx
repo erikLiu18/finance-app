@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { CREDIT_CARD_PRESETS, getCardPreset, MONTHS } from "@/lib/constants/card-presets";
 
 const formSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -44,6 +45,8 @@ const formSchema = z.object({
     }),
     notifyEmail: z.boolean().default(false),
     notifySms: z.boolean().default(false),
+    cardType: z.string().optional().nullable(),
+    annualFeeMonth: z.string().optional().nullable(),
 });
 
 export function AddCardDialog() {
@@ -57,6 +60,8 @@ export function AddCardDialog() {
             dueDay: "1",
             notifyEmail: false,
             notifySms: false,
+            cardType: "custom",
+            annualFeeMonth: "none",
         },
     });
     /* eslint-enable @typescript-eslint/no-explicit-any */
@@ -66,6 +71,8 @@ export function AddCardDialog() {
             await addCreditCard({
                 ...values,
                 dueDay: Number(values.dueDay),
+                cardType: values.cardType === "custom" ? null : values.cardType,
+                annualFeeMonth: values.annualFeeMonth && values.annualFeeMonth !== "none" ? Number(values.annualFeeMonth) : null,
             });
             setOpen(false);
             form.reset();
@@ -103,6 +110,46 @@ export function AddCardDialog() {
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        {/* Card Type Selection */}
+                        <FormField
+                            control={form.control}
+                            name="cardType"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Card Type</FormLabel>
+                                    <Select
+                                        onValueChange={(val) => {
+                                            field.onChange(val);
+                                            if (val !== "custom") {
+                                                const selected = getCardPreset(val);
+                                                if (selected && !form.getValues("name")) {
+                                                    form.setValue("name", selected.fullName);
+                                                }
+                                            }
+                                        }}
+                                        defaultValue={field.value || "custom"}
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select card preset" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="custom">
+                                                Custom / Other Card
+                                            </SelectItem>
+                                            {CREDIT_CARD_PRESETS.map((p) => (
+                                                <SelectItem key={p.id} value={p.id}>
+                                                    {p.fullName}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
                         <FormField
                             control={form.control}
                             name="name"
@@ -137,6 +184,38 @@ export function AddCardDialog() {
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Annual Fee Month */}
+                        <FormField
+                            control={form.control}
+                            name="annualFeeMonth"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Annual Fee Month</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value || "none"}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select month" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="none">
+                                                None / Not set
+                                            </SelectItem>
+                                            {MONTHS.map((m) => (
+                                                <SelectItem key={m.value} value={m.value.toString()}>
+                                                    {m.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormDescription>
+                                        The month your card's annual fee renews.
+                                    </FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}

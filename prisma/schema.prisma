@@ -32,6 +32,8 @@ model CreditCard {
   notifySms      Boolean  @default(false)
   notes          String?  // Max 50 chars
   phoneNumber    String?
+  cardType       String?  // Preset identifier e.g. "amex_platinum"
+  annualFeeMonth Int?     // Month of annual fee (1-12)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

@@ -69,7 +69,9 @@ export function CreditCardsContent({ creditCards: initialCreditCards, sharedCard
                     current.dueDay !== original.dueDay ||
                     current.notifyEmail !== original.notifyEmail ||
                     current.notifySms !== original.notifySms ||
-                    current.notes !== original.notes
+                    current.notes !== original.notes ||
+                    current.cardType !== original.cardType ||
+                    current.annualFeeMonth !== original.annualFeeMonth
                 );
             });
 
@@ -83,6 +85,8 @@ export function CreditCardsContent({ creditCards: initialCreditCards, sharedCard
                 notifyEmail: card.notifyEmail,
                 notifySms: card.notifySms,
                 notes: card.notes || undefined,
+                cardType: card.cardType || undefined,
+                annualFeeMonth: card.annualFeeMonth ?? undefined,
             })));
 
             setIsEditMode(false);
